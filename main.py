@@ -9,6 +9,8 @@
 # python -m pip install fastapi --user
 
 import fastapi
+import aiohttp
+import json
 
 app = fastapi.FastAPI()
 
@@ -36,7 +38,8 @@ async def banana():
 
 
 @app.get("/rasp")
-def banana2():
-    ...
-
-    # TODO: moram pozvati onaj drugi server da bi korisniku vratio odgovor
+async def banana2():
+    async with aiohttp.ClientSession() as session:
+        async with session.get("http://127.0.0.1:8001/info_2") as response:
+            txt = await response.text()
+            return json.loads(txt)
