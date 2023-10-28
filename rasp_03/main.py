@@ -1,17 +1,17 @@
 import fastapi
+import aiohttp
+import json
 
 app = fastapi.FastAPI()
 
 
 @app.get("/zbroj_fib/{n}")
 async def zbroj_fib(n):
-    # pozivati drugi servis da bi izračunala sumu prvih
-    # N fib brojeva
     n = int(n)
-    # npr. primi 3 kao argument
-    # mora vratiti fib(1) + fib(2) + fib(3)
-    # primi 10 kao argument
-    # mora vratiti fib(1) + fib(2) + ... + fib(10)
-    # prevedeno        1  +     2  + ... +     55
-
-    return {"input": n, "result": n}
+    final_result = 0
+    for i in range(n+1):
+        async with aiohttp.ClientSession() as session:
+            async with session.get("http://127.0.0.1:8000/fib/" + str(i)) as response:
+                result = await response.text()
+                final_result += int(json.loads(result)["result"])
+    return {"input": n, "result": final_result}
