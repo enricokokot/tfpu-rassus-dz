@@ -1,8 +1,9 @@
 import fastapi
+from functools import lru_cache
 
 app = fastapi.FastAPI()
 
-
+@lru_cache(maxsize=None)
 def get_fib(a):
     if a <= 1:
         return a
