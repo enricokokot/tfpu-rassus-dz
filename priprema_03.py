@@ -2,9 +2,8 @@ import asyncio
 import aiohttp
 import json
 
+
 # 04
-
-
 async def fetch_url(url):
     await asyncio.sleep(2)
     async with aiohttp.ClientSession() as session:
