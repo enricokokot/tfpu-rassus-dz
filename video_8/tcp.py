@@ -14,7 +14,7 @@ async def handler(reader, writer):
 
 async def main():
     server = await asyncio.start_server(
-        handler,  # funkcija koja će zapriamti nove konekcije
+        handler,  # funkcija koja će zaprimati nove konekcije
         "127.0.0.1",
         8080
     )
