@@ -1,6 +1,5 @@
 import fastapi
 import aiohttp
-import json
 
 app = fastapi.FastAPI()
 workers = set()
