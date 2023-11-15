@@ -88,15 +88,11 @@ async def add_todo(todo: ToDo):
     todos[todo.id] = todo
     return todo
 
-# @app.put("/todo/{id}")
-@app.put("/todo")
-async def update_todo(todo: ToDo):
-    # id = int(id)
-    # if id in todos.keys():
-    #     todos[id] = todo
-    #     return todo
-    if todo.id in todos.keys():
-        todos[todo.id] = todo
+@app.put("/todo/{id}")
+async def update_todo(id, todo: ToDo):
+    id = int(id)
+    if id in todos.keys():
+        todos[id] = todo
         return todo
     return "Error: Id doesn't exist!"
 
@@ -122,10 +118,11 @@ async def get_pokemon(id):
         return caught_pokemon["stored pokemon"][id]
     async with aiohttp.ClientSession() as session:
         async with session.get("https://pokeapi.co/api/v2/pokemon/" + str(id)) as response:
-            result = await response.json()
-            final_result = {"id": result["id"], "name": result["name"], "height": result["height"]}
-            # print(json.dumps(final_result, indent=2))
+            whole_pokemon = await response.json()
+            new_pokemon = Pokemon(id = whole_pokemon["id"], ime = whole_pokemon["name"])
+            caught_pokemon["stored pokemon"][id] = new_pokemon
+            return new_pokemon
 
 @app.get("/pokemon_store")
 async def get_pokemons():
-    return [pokemon for pokemon in caught_pokemon["stored pokemon"]]
+    return caught_pokemon
