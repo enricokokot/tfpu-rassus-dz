@@ -9,18 +9,20 @@ async def lifespan(app: fastapi.FastAPI):
     task = asyncio.create_task(start_checking_for_workers())
     yield
     task.cancel()
-    await task
 
 app = fastapi.FastAPI(lifespan=lifespan)
 workers = set()
+counter = 0
 
 
 @app.get("/fib/{n}")
 async def zbroj_fib(n):
+    global counter
     n = int(n)
     if not workers:
         return {"input": n, "result": "All servers are currently busy"}
-    current_worker = 1
+    counter = (counter + 1) % len(workers)
+    current_worker = counter + 1
     async with aiohttp.ClientSession() as session:
         async with session.get("http://127.0.0.1:800" + str(current_worker) + "/fib/" + str(n)) as response:
             result = await response.json()
