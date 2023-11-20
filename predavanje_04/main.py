@@ -1,19 +1,30 @@
 import fastapi
 import aiohttp
+from contextlib import asynccontextmanager
+import asyncio
 
-app = fastapi.FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: fastapi.FastAPI):
+    task = asyncio.create_task(start_checking_for_workers())
+    yield
+    task.cancel()
+
+app = fastapi.FastAPI(lifespan=lifespan)
 workers = set()
-current_worker = 0
+counter = 0
 
 
 @app.get("/fib/{n}")
 async def zbroj_fib(n):
-    global current_worker
+    global counter
     n = int(n)
-    curr_work = workers[current_worker]
+    if not workers:
+        return {"input": n, "result": "All servers are currently busy"}
+    counter = (counter + 1) % len(workers)
+    current_worker = counter + 1
     async with aiohttp.ClientSession() as session:
-        async with session.get("http://127.0.0.1:800" + str(curr_work) + "/fib/" + str(n)) as response:
-            current_worker += 1
+        async with session.get("http://127.0.0.1:800" + str(current_worker) + "/fib/" + str(n)) as response:
             result = await response.json()
             final_result = int(result["result"])
 
@@ -40,3 +51,16 @@ async def odjavi_workera(id):
     id = int(id)
     workers.remove(id)
     return {"status": "job completed", "answer": workers}
+
+
+async def start_checking_for_workers():
+    while True:
+        for worker in workers:
+            async with aiohttp.ClientSession() as session:
+                try:
+                    async with session.get("http://127.0.0.1:800" + str(worker)) as response:
+                        result = await response.json()
+                except aiohttp.ClientConnectorError as err:
+                    workers.remove(worker)
+        print(f"Pass completed. Current status: {workers}")
+        await asyncio.sleep(10)
