@@ -2,17 +2,31 @@ import fastapi
 import aiohttp
 from contextlib import asynccontextmanager
 import asyncio
+import sys
+import subprocess
+import json
+
+workers = []
+counter = 0
 
 
 @asynccontextmanager
 async def lifespan(app: fastapi.FastAPI):
-    task = asyncio.create_task(start_checking_for_workers())
+    global workers
+    if "--port" in sys.argv:
+        port_index = sys.argv.index("--port") + 1
+        if port_index < len(sys.argv):
+            port_number = int(sys.argv[port_index])
+        if port_number == 8000:
+            with open('workers.json', 'r') as openfile:
+                workers = json.load(openfile)
+            task = asyncio.create_task(start_checking_for_workers())
+        else:
+            task = asyncio.create_task(start_checking_balancer_heartbeat())
     yield
     task.cancel()
 
 app = fastapi.FastAPI(lifespan=lifespan)
-workers = []
-counter = 0
 
 
 @app.get("/worker")
@@ -80,3 +94,20 @@ async def start_checking_for_workers():
                     worker["alive"] = False
         print(f"Pass completed. Current status: {workers}")
         await asyncio.sleep(10)
+
+
+async def start_checking_balancer_heartbeat():
+    sleep_time = 1
+    while True:
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get("http://127.0.0.1:8000/admin") as response:
+                    result = await response.json()
+                    sleep_time = 1
+                    with open("workers.json", "w") as outfile:
+                        outfile.write(json.dumps(result, indent=4))
+            except aiohttp.ClientConnectorError as err:
+                sleep_time *= 2
+                if sleep_time >= 16:
+                    subprocess.run("uvicorn main:app --reload --port 8000")
+        await asyncio.sleep(sleep_time)
