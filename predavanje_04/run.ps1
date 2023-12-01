@@ -1,0 +1,7 @@
+# ... "-NoExit -Command Start-Sleep -Seconds 5 ; conda activate ..."
+Start-Process powershell -ArgumentList "-NoExit -Command conda activate dissys ; uvicorn main:app --port 8000 --reload"
+Start-Process powershell -ArgumentList "-NoExit -Command conda activate dissys ; uvicorn main:app --port 8001 --reload"
+Start-Process powershell -ArgumentList "-NoExit -Command conda activate dissys ; uvicorn fib:app --port 8002 --reload"
+Start-Process powershell -ArgumentList "-NoExit -Command conda activate dissys ; uvicorn fib:app --port 8003 --reload"
+Start-Process powershell -ArgumentList "-NoExit -Command conda activate dissys ; uvicorn fib:app --port 8004 --reload"
+Start-Process powershell -ArgumentList "-NoExit -Command conda activate dissys ; uvicorn fib:app --port 8005 --reload"
